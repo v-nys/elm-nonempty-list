@@ -10,7 +10,7 @@ module List.Nonempty exposing
     , head, tail, rest, last, uncons, unconsLast, take, drop, takeLast, dropLast, unzip2, unzip3
     )
 
-{-| A library for a non-empty list type.
+{-| A library for a non-empty list type. More obscure/specialized functions are found under Extra.
 
 
 # Definition
