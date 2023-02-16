@@ -3,7 +3,7 @@
   "name": "coreygirard/elm-nonemptylist",
   "summary": "A non-empty list type",
   "license": "MIT",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "exposed-modules": [
     "List.Nonempty",
     "List.Nonempty.Extra"
