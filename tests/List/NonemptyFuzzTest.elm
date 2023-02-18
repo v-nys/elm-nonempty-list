@@ -1,4 +1,4 @@
-module NonemptyListFuzzTest exposing (..)
+module List.NonemptyFuzzTest exposing (..)
 
 import Expect exposing (Expectation)
 import Fuzz exposing (..)
@@ -57,32 +57,6 @@ suite =
                                 (List.Nonempty.toList nelist2)
                             )
             ]
-        , describe "List.Nonempty.appendList"
-            [ fuzz2 (nonemptylist int) (list int) "handles basic operation" <|
-                \nelist list ->
-                    List.Nonempty.appendList
-                        nelist
-                        list
-                        |> List.Nonempty.toList
-                        |> Expect.equal
-                            (List.append
-                                (List.Nonempty.toList nelist)
-                                list
-                            )
-            ]
-        , describe "List.Nonempty.prependList"
-            [ fuzz2 (list int) (nonemptylist int) "handles basic operation" <|
-                \list nelist ->
-                    List.Nonempty.prependList
-                        list
-                        nelist
-                        |> List.Nonempty.toList
-                        |> Expect.equal
-                            (List.append
-                                list
-                                (List.Nonempty.toList nelist)
-                            )
-            ]
         , describe "List.Nonempty.concat"
             [ fuzz (nonemptylist (nonemptylist int)) "handles basic operation" <|
                 \nelistOfNelists ->
@@ -94,36 +68,6 @@ suite =
                                 |> List.Nonempty.toList
                                 |> List.map List.Nonempty.toList
                                 |> List.concat
-                            )
-            ]
-        , describe "List.Nonempty.intersperse"
-            [ fuzz2 int (nonemptylist int) "is always of odd length" <|
-                \sep elems ->
-                    elems
-                        |> List.Nonempty.intersperse sep
-                        |> List.Nonempty.length
-                        |> (\n -> modBy 2 n == 1)
-                        |> Expect.equal True
-            , fuzz2 int (nonemptylist int) "is correct length" <|
-                \sep elems ->
-                    elems
-                        |> List.Nonempty.intersperse sep
-                        |> List.Nonempty.length
-                        |> Expect.equal
-                            (List.Nonempty.length elems * 2 - 1)
-            , fuzz2 int (nonemptylist int) "all odd indexes equal the separator" <|
-                \sep elems ->
-                    elems
-                        |> List.Nonempty.intersperse sep
-                        |> List.Nonempty.indexedMap Tuple.pair
-                        |> List.Nonempty.partition (\( i, _ ) -> modBy 2 i == 0)
-                        |> Tuple.mapFirst (List.map Tuple.second)
-                        |> Tuple.mapSecond (List.map Tuple.second)
-                        |> Expect.equal
-                            ( toList elems
-                            , List.repeat
-                                (List.Nonempty.length elems - 1)
-                                sep
                             )
             ]
         , describe "List.Nonempty.sort"

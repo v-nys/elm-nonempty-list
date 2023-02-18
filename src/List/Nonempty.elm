@@ -64,8 +64,8 @@ import List.Extra
 
 {-| A list type that must contain at least one element
 -}
-type ListNonempty a
-    = ListNonempty ( a, List a )
+type alias ListNonempty a =
+    ( a, List a )
 
 
 {-| Create a non-empty list containing just a single element
@@ -75,7 +75,7 @@ type ListNonempty a
 -}
 singleton : a -> ListNonempty a
 singleton elem =
-    ListNonempty ( elem, [] )
+    ( elem, [] )
 
 
 {-| Similar to `List.repeat`, except this is guaranteed to contain
@@ -91,7 +91,7 @@ use `List.repeat` plus `fromList`
 repeat : Int -> a -> ListNonempty a
 repeat n elem =
     {- always has at least one element, regardless of 'n' -}
-    ListNonempty ( elem, List.repeat (n - 1) elem )
+    ( elem, List.repeat (n - 1) elem )
 
 
 {-| Works slightly differently from `List.range`. First provided number
@@ -112,13 +112,13 @@ range : Int -> Int -> ListNonempty Int
 range a b =
     case compare a b of
         EQ ->
-            ListNonempty ( a, [] )
+            ( a, [] )
 
         LT ->
-            ListNonempty ( a, List.range (a + 1) b )
+            ( a, List.range (a + 1) b )
 
         GT ->
-            ListNonempty ( a, List.Extra.reverseRange (a - 1) b )
+            ( a, List.Extra.reverseRange (a - 1) b )
 
 
 {-| Try to create a non-empty list from an ordinary list.
@@ -133,7 +133,7 @@ fromList : List a -> Maybe (ListNonempty a)
 fromList elems =
     case elems of
         head_ :: tail_ ->
-            Just <| ListNonempty ( head_, tail_ )
+            Just <| ( head_, tail_ )
 
         [] ->
             Nothing
@@ -146,7 +146,7 @@ fromList elems =
 -}
 fromPair : a -> List a -> ListNonempty a
 fromPair a b =
-    ListNonempty ( a, b )
+    ( a, b )
 
 
 {-| Create a non-empty list from a tuple of element and list
@@ -167,7 +167,7 @@ fromTuple ( a, b ) =
 
 -}
 toTuple : ListNonempty a -> ( a, List a )
-toTuple (ListNonempty ( a, b )) =
+toTuple ( a, b ) =
     ( a, b )
 
 
@@ -177,64 +177,74 @@ toTuple (ListNonempty ( a, b )) =
 
 -}
 toList : ListNonempty a -> List a
-toList (ListNonempty ( a, b )) =
+toList ( a, b ) =
     a :: b
 
 
 {-| Append a value to become the new last element.
 
-    append 4 [ 1, 2, 3 ]
+    append 4 (fromPair 1 [ 2, 3 ])
         |> toList
         == [ 1, 2, 3, 4 ]
 
 -}
 appendElem : a -> ListNonempty a -> ListNonempty a
-appendElem elem (ListNonempty ( a, b )) =
-    ListNonempty ( a, b ++ [ elem ] )
+appendElem elem ( a, b ) =
+    ( a, b ++ [ elem ] )
 
 
 {-| Prepend a value to become the new first element.
 
-    prepend 0 [ 1, 2, 3 ]
+    prepend 0 (fromPair 1 [ 2, 3 ])
         |> toList
         == [ 0, 1, 2, 3 ]
 
 -}
 prependElem : a -> ListNonempty a -> ListNonempty a
 prependElem elem elems =
-    ListNonempty ( elem, toList elems )
+    ( elem, toList elems )
 
 
 {-| Pop the first element.
 
-    popFirst 4 [ 1, 2, 3 ]
-        |> toList
-        == [ 1, 2, 3, 4 ]
+    fromPair 0 [ 1, 2, 3 ]
+        |> popFirst
+        == ( 0, Just (fromPair 1 [ 2, 3 ]) )
 
--> Maybe (a, ListNonempty a)
--> (a, Maybe (ListNonempty a))
--> (a, Either (List a) (ListNonempty a))
+    fromPair 0 []
+        |> popFirst
+        == ( 0, Nothing )
 
 -}
-popFirst : a -> ListNonempty a -> ListNonempty a
-popFirst elem (ListNonempty ( a, b )) =
-    ListNonempty ( a, b ++ [ elem ] )
+popFirst : ListNonempty a -> ( a, Maybe (ListNonempty a) )
+popFirst ( a, b ) =
+    case b of
+        head_ :: tail_ ->
+            ( a, Just <| ( head_, tail_ ) )
+
+        [] ->
+            ( a, Nothing )
 
 
 {-| Pop the last element.
 
-    popLast 4 [ 1, 2, 3 ]
-        |> toList
-        == [ 1, 2, 3, 4 ]
+    fromPair 0 [ 1, 2, 3 ]
+        |> popLast
+        == ( 3, Just (fromPair 0 [ 1, 2 ]) )
 
--> Maybe (a, ListNonempty a)
--> (a, Maybe (ListNonempty a))
--> (a, Either (List a) (ListNonempty a))
+    fromPair 0 []
+        |> popLast
+        == ( Nothing, 0 )
 
 -}
-popLast : a -> ListNonempty a -> ListNonempty a
-popLast elem (ListNonempty ( a, b )) =
-    ListNonempty ( a, b ++ [ elem ] )
+popLast : ListNonempty a -> ( Maybe (ListNonempty a), a )
+popLast ( a, b ) =
+    case List.Extra.unconsLast b of
+        Just ( last_, rest_ ) ->
+            ( Just ( a, rest_ ), last_ )
+
+        Nothing ->
+            ( Nothing, a )
 
 
 {-| Equivalent to `List.map`
@@ -246,8 +256,8 @@ popLast elem (ListNonempty ( a, b )) =
 
 -}
 map : (a -> b) -> ListNonempty a -> ListNonempty b
-map f (ListNonempty ( a, b )) =
-    ListNonempty ( f a, List.map f b )
+map f ( a, b ) =
+    ( f a, List.map f b )
 
 
 {-| Equivalent to `List.indexedMap`
@@ -259,8 +269,8 @@ map f (ListNonempty ( a, b )) =
 
 -}
 indexedMap : (Int -> a -> b) -> ListNonempty a -> ListNonempty b
-indexedMap f (ListNonempty ( a, b )) =
-    ListNonempty ( f 0 a, List.indexedMap (\i -> f (i + 1)) b )
+indexedMap f ( a, b ) =
+    ( f 0 a, List.indexedMap (\i -> f (i + 1)) b )
 
 
 {-| Equivalent to `List.foldl`
@@ -279,7 +289,7 @@ foldl f start elems =
 
 -}
 foldl1 : (a -> a -> a) -> ListNonempty a -> a
-foldl1 f (ListNonempty ( a, b )) =
+foldl1 f ( a, b ) =
     List.foldl f a b
 
 
@@ -336,7 +346,7 @@ filterMap f elems =
 
 -}
 length : ListNonempty a -> Int
-length (ListNonempty ( _, b )) =
+length ( _, b ) =
     1 + List.length b
 
 
@@ -348,7 +358,7 @@ length (ListNonempty ( _, b )) =
 
 -}
 isSingleton : ListNonempty a -> Bool
-isSingleton (ListNonempty ( _, b )) =
+isSingleton ( _, b ) =
     List.isEmpty b
 
 
@@ -361,13 +371,13 @@ isSingleton (ListNonempty ( _, b )) =
 
 -}
 reverse : ListNonempty a -> ListNonempty a
-reverse (ListNonempty ( a, b )) =
+reverse ( a, b ) =
     case List.Extra.unconsLast b of
         Just ( last_, rest_ ) ->
-            ListNonempty ( last_, List.reverse <| a :: rest_ )
+            ( last_, List.reverse <| a :: rest_ )
 
         Nothing ->
-            ListNonempty ( a, b )
+            ( a, b )
 
 
 {-| Same as `List.member`
@@ -378,7 +388,7 @@ reverse (ListNonempty ( a, b )) =
 
 -}
 member : a -> ListNonempty a -> Bool
-member elem (ListNonempty ( a, b )) =
+member elem ( a, b ) =
     if elem == a then
         True
 
@@ -418,7 +428,7 @@ any f elems =
 
 -}
 maximum : ListNonempty comparable -> comparable
-maximum (ListNonempty ( a, b )) =
+maximum ( a, b ) =
     List.maximum (a :: b)
         |> Maybe.withDefault a
 
@@ -431,7 +441,7 @@ maximum (ListNonempty ( a, b )) =
 
 -}
 minimum : ListNonempty comparable -> comparable
-minimum (ListNonempty ( a, b )) =
+minimum ( a, b ) =
     List.minimum (a :: b)
         |> Maybe.withDefault a
 
@@ -464,8 +474,8 @@ product elems =
 
 -}
 append : ListNonempty a -> ListNonempty a -> ListNonempty a
-append (ListNonempty ( a, b )) c =
-    ListNonempty ( a, b ++ toList c )
+append ( a, b ) c =
+    ( a, b ++ toList c )
 
 
 {-| Similar to `List.concat`
@@ -482,8 +492,8 @@ append (ListNonempty ( a, b )) c =
 
 -}
 concat : ListNonempty (ListNonempty a) -> ListNonempty a
-concat (ListNonempty ( ListNonempty ( a, b ), c )) =
-    ListNonempty ( a, b ++ List.concatMap toList c )
+concat ( ( a, b ), c ) =
+    ( a, b ++ List.concatMap toList c )
 
 
 {-| Similar to `List.concatMap`
@@ -509,8 +519,8 @@ concatMap f elems =
 
 -}
 map2 : (a -> b -> result) -> ListNonempty a -> ListNonempty b -> ListNonempty result
-map2 f (ListNonempty ( a1, b1 )) (ListNonempty ( a2, b2 )) =
-    ListNonempty ( f a1 a2, List.map2 f b1 b2 )
+map2 f ( a1, b1 ) ( a2, b2 ) =
+    ( f a1 a2, List.map2 f b1 b2 )
 
 
 {-| Similar to `List.map3`
@@ -524,8 +534,8 @@ map2 f (ListNonempty ( a1, b1 )) (ListNonempty ( a2, b2 )) =
 
 -}
 map3 : (a -> b -> c -> result) -> ListNonempty a -> ListNonempty b -> ListNonempty c -> ListNonempty result
-map3 f (ListNonempty ( a1, b1 )) (ListNonempty ( a2, b2 )) (ListNonempty ( a3, b3 )) =
-    ListNonempty ( f a1 a2 a3, List.map3 f b1 b2 b3 )
+map3 f ( a1, b1 ) ( a2, b2 ) ( a3, b3 ) =
+    ( f a1 a2 a3, List.map3 f b1 b2 b3 )
 
 
 {-| Similar to `List.map4`
@@ -539,8 +549,8 @@ map3 f (ListNonempty ( a1, b1 )) (ListNonempty ( a2, b2 )) (ListNonempty ( a3, b
 
 -}
 map4 : (a -> b -> c -> d -> result) -> ListNonempty a -> ListNonempty b -> ListNonempty c -> ListNonempty d -> ListNonempty result
-map4 f (ListNonempty ( a1, b1 )) (ListNonempty ( a2, b2 )) (ListNonempty ( a3, b3 )) (ListNonempty ( a4, b4 )) =
-    ListNonempty ( f a1 a2 a3 a4, List.map4 f b1 b2 b3 b4 )
+map4 f ( a1, b1 ) ( a2, b2 ) ( a3, b3 ) ( a4, b4 ) =
+    ( f a1 a2 a3 a4, List.map4 f b1 b2 b3 b4 )
 
 
 {-| Similar to `List.map5`
@@ -554,8 +564,8 @@ map4 f (ListNonempty ( a1, b1 )) (ListNonempty ( a2, b2 )) (ListNonempty ( a3, b
 
 -}
 map5 : (a -> b -> c -> d -> e -> result) -> ListNonempty a -> ListNonempty b -> ListNonempty c -> ListNonempty d -> ListNonempty e -> ListNonempty result
-map5 f (ListNonempty ( a1, b1 )) (ListNonempty ( a2, b2 )) (ListNonempty ( a3, b3 )) (ListNonempty ( a4, b4 )) (ListNonempty ( a5, b5 )) =
-    ListNonempty ( f a1 a2 a3 a4 a5, List.map5 f b1 b2 b3 b4 b5 )
+map5 f ( a1, b1 ) ( a2, b2 ) ( a3, b3 ) ( a4, b4 ) ( a5, b5 ) =
+    ( f a1 a2 a3 a4 a5, List.map5 f b1 b2 b3 b4 b5 )
 
 
 {-| Similar to `List.sort`
@@ -567,17 +577,17 @@ map5 f (ListNonempty ( a1, b1 )) (ListNonempty ( a2, b2 )) (ListNonempty ( a3, b
 
 -}
 sort : ListNonempty comparable -> ListNonempty comparable
-sort (ListNonempty ( a, b )) =
+sort ( a, b ) =
     case List.sort b of
         head_ :: tail_ ->
             if head_ < a then
-                ListNonempty ( head_, List.sort <| a :: tail_ )
+                ( head_, List.sort <| a :: tail_ )
 
             else
-                ListNonempty ( a, head_ :: tail_ )
+                ( a, head_ :: tail_ )
 
         [] ->
-            ListNonempty ( a, [] )
+            ( a, [] )
 
 
 {-| Similar to `List.sortBy`
@@ -594,17 +604,17 @@ sort (ListNonempty ( a, b )) =
 
 -}
 sortBy : (a -> comparable) -> ListNonempty a -> ListNonempty a
-sortBy f (ListNonempty ( a, b )) =
+sortBy f ( a, b ) =
     case List.sortBy f b of
         head_ :: tail_ ->
             if f head_ < f a then
-                ListNonempty ( head_, List.sortBy f <| a :: tail_ )
+                ( head_, List.sortBy f <| a :: tail_ )
 
             else
-                ListNonempty ( a, head_ :: tail_ )
+                ( a, head_ :: tail_ )
 
         [] ->
-            ListNonempty ( a, [] )
+            ( a, [] )
 
 
 {-| Similar to `List.sortWith`
@@ -616,18 +626,18 @@ sortBy f (ListNonempty ( a, b )) =
 
 -}
 sortWith : (a -> a -> Order) -> ListNonempty a -> ListNonempty a
-sortWith f (ListNonempty ( a, b )) =
+sortWith f ( a, b ) =
     case List.sortWith f b of
         head_ :: tail_ ->
             case f head_ a of
                 LT ->
-                    ListNonempty ( head_, List.sortWith f <| a :: tail_ )
+                    ( head_, List.sortWith f <| a :: tail_ )
 
                 _ ->
-                    ListNonempty ( a, head_ :: tail_ )
+                    ( a, head_ :: tail_ )
 
         [] ->
-            ListNonempty ( a, [] )
+            ( a, [] )
 
 
 {-| Return the first element. Unlike `List.head`, doesn't need to return a Maybe.
@@ -636,7 +646,7 @@ sortWith f (ListNonempty ( a, b )) =
 
 -}
 head : ListNonempty a -> a
-head (ListNonempty ( a, b )) =
+head ( a, b ) =
     a
 
 
@@ -646,7 +656,7 @@ head (ListNonempty ( a, b )) =
 
 -}
 tail : ListNonempty a -> List a
-tail (ListNonempty ( a, b )) =
+tail ( a, b ) =
     b
 
 
@@ -656,7 +666,7 @@ tail (ListNonempty ( a, b )) =
 
 -}
 last : ListNonempty a -> a
-last (ListNonempty ( a, b )) =
+last ( a, b ) =
     case List.Extra.unconsLast b of
         Just ( last_, _ ) ->
             last_
@@ -671,7 +681,7 @@ last (ListNonempty ( a, b )) =
 
 -}
 rest : ListNonempty a -> List a
-rest (ListNonempty ( a, b )) =
+rest ( a, b ) =
     case List.Extra.unconsLast b of
         Just ( _, rest_ ) ->
             a :: rest_
@@ -686,7 +696,7 @@ rest (ListNonempty ( a, b )) =
 
 -}
 uncons : ListNonempty a -> ( a, List a )
-uncons (ListNonempty ( a, b )) =
+uncons ( a, b ) =
     ( a, b )
 
 
@@ -696,7 +706,7 @@ uncons (ListNonempty ( a, b )) =
 
 -}
 unconsLast : ListNonempty a -> ( List a, a )
-unconsLast (ListNonempty ( a, b )) =
+unconsLast ( a, b ) =
     case List.Extra.unconsLast b of
         Just ( last_, rest_ ) ->
             ( a :: rest_, last_ )
@@ -714,8 +724,8 @@ the value of N. If this behavior is undesired, use `toList` and `List.take`
 
 -}
 take : Int -> ListNonempty a -> ListNonempty a
-take n (ListNonempty ( a, b )) =
-    ListNonempty ( a, List.take (n - 1) b )
+take n ( a, b ) =
+    ( a, List.take (n - 1) b )
 
 
 {-| Return all elements except for the first N elements. Always includes the last element, regardless of
@@ -727,17 +737,17 @@ the value of N. If this behavior is undesired, use `toList` and `List.drop`
 
 -}
 drop : Int -> ListNonempty a -> ListNonempty a
-drop n (ListNonempty ( a, b )) =
+drop n ( a, b ) =
     if n <= 0 then
-        ListNonempty ( a, b )
+        ( a, b )
 
     else
         case b of
             head_ :: tail_ ->
-                drop (n - 1) (ListNonempty ( head_, tail_ ))
+                drop (n - 1) ( head_, tail_ )
 
             [] ->
-                ListNonempty ( a, b )
+                ( a, b )
 
 
 {-| Return the last N elements. Always includes the last element, regardless of
@@ -782,13 +792,13 @@ dropLast n elems =
 
 -}
 unzip2 : ListNonempty ( a, b ) -> ( ListNonempty a, ListNonempty b )
-unzip2 (ListNonempty ( ( a1, a2 ), b )) =
+unzip2 ( ( a1, a2 ), b ) =
     let
         ( b1, b2 ) =
             List.unzip b
     in
-    ( ListNonempty ( a1, b1 )
-    , ListNonempty ( a2, b2 )
+    ( ( a1, b1 )
+    , ( a2, b2 )
     )
 
 
@@ -803,14 +813,14 @@ unzip2 (ListNonempty ( ( a1, a2 ), b )) =
 
 -}
 unzip3 : ListNonempty ( a, b, c ) -> ( ListNonempty a, ListNonempty b, ListNonempty c )
-unzip3 (ListNonempty ( ( a1, a2, a3 ), b )) =
+unzip3 ( ( a1, a2, a3 ), b ) =
     let
         ( b1, b2, b3 ) =
             unzip3Helper b
     in
-    ( ListNonempty ( a1, b1 )
-    , ListNonempty ( a2, b2 )
-    , ListNonempty ( a3, b3 )
+    ( ( a1, b1 )
+    , ( a2, b2 )
+    , ( a3, b3 )
     )
 
 

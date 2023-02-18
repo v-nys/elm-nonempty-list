@@ -1,6 +1,6 @@
 {
   "type": "package",
-  "name": "coreygirard/elm-nonemptylist",
+  "name": "coreygirard/elm-nonempty-list",
   "summary": "A non-empty list type",
   "license": "MIT",
   "version": "1.0.0",

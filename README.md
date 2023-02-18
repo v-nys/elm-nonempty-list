@@ -1,4 +1,4 @@
-# elm-nonemptylist
+# elm-nonempty-list
 
 ## Prior art
 
