@@ -1,6 +1,6 @@
 {
   "type": "package",
-  "name": "vincentnys/elm-nonempty-list",
+  "name": "v-nys/elm-nonempty-list",
   "summary": "Fork of coreygirard/..., without hard dependency on test",
   "license": "MIT",
   "version": "1.0.0",
